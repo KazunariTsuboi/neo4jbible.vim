@@ -7,11 +7,16 @@ let g:neo4j_list_buffer_right = "NEO4JLISTS_RIGHT"
 
 
 
-function! neo4jbible#make_windows() abort
+function! neo4jbible#make_windows(...) abort
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
     " 現在のウィンドウIDの取得
     let g:current_window_id = win_getid()
-    python3 vim.command(f'let g:lists = {neo4jbible_getlist()}')
+    "python3 vim.command(f'let g:lists = {neo4jbible_getlist()}')
+    python3 vim.command(f'let g:lists = {neo4jbible_getStudynote(vim.eval("a:1"), vim.eval("a:2"))}')
+    if g:lists == {}
+      echo 'おそらくまだスタディノートが公開されていません'
+      return
+    endif
 
     " 'NEO4JLISTS' バッファが存在している場合
     if bufexists(g:neo4j_list_buffer)
