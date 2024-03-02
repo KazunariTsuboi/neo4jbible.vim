@@ -4,16 +4,18 @@ python3 import vim
 " 一覧作成用のバッファ名
 let g:neo4j_list_buffer = "NEO4JLISTS"
 let g:neo4j_list_buffer_right = "NEO4JLISTS_RIGHT"
-
-
+let g:current_window_id = win_getid()
 
 function! neo4jbible#make_windows(...) abort
+    let arg_book =    a:0 >= 1 ? a:1 : 'マタイ'
+    let arg_chapter = a:0 >= 2 ? a:2 : '1'
+
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
     " 現在のウィンドウIDの取得
-    let g:current_window_id = win_getid()
-    "python3 vim.command(f'let g:lists = {neo4jbible_getlist()}')
-    python3 vim.command(f'let g:lists = {neo4jbible_getStudynote(vim.eval("a:1"), vim.eval("a:2"))}')
-    if g:lists == {}
+    python3 vim.command(f'let s:result = {neo4jbible_getStudynote(book=vim.eval("arg_book"), chapter=vim.eval("arg_chapter"))}')
+    let g:result_list = s:result[0]
+    let g:result_dict = s:result[1]
+    if g:result_dict == {}
       echo 'おそらくまだスタディノートが公開されていません'
       return
     endif
@@ -43,9 +45,11 @@ function! neo4jbible#make_windows(...) abort
   
     " セッションファイルを表示する一時バッファのテキストをすべて削除して、取得したファイル一覧をバッファに挿入します
     %delete _
-    call setline(1, keys(g:lists))
+    " キーのみを抽出
+    let g:result_keys = map(copy(g:result_list), 'v:val[0]')
+    call setline(1, g:result_keys)
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'lock')
-    call neo4jbible#infowindow(g:lists[getline('.')])
+    call neo4jbible#infowindow(g:result_dict[getline('.')])
 endfunction
 
 function! neo4jbible#set_keymap(bufname) abort
@@ -78,6 +82,7 @@ function! neo4jbible#set_keymap(bufname) abort
         nnoremap <silent> <buffer>
           \ <Plug>(session-open)
           \ :<C-u> call neo4jbible#echo_line_data(getline('.')) <CR>
+          "\ :<C-u> call neo4jbible#echo_line_data(g:result_dict[getline('.')]) <CR>
           \ :<C-u> call neo4jbible#clearHighlight() <CR>
         nnoremap <silent> <buffer>
           \ <Plug>(session-select)
@@ -109,7 +114,7 @@ function! neo4jbible#set_keymap_infowindow(bufname) abort
           \ :<C-u> execute 'bwipeout!' g:neo4j_list_buffer <CR>
         nnoremap <silent> <buffer>
           \ <Plug>(session-open)
-          \ :<C-u> call neo4jbible#echo_line_data(g:lists[getline('.')]) <CR>
+          \ :<C-u> call neo4jbible#echo_line_data(g:result_dict[getline('.')]) <CR>
     
         " <Plug>マップをキーにマッピングします
         " `q` は最終的に :<C-u>bwipeout!<CR>
@@ -127,7 +132,7 @@ function! neo4jbible#move(num) abort
   let newpos = [pos[1] + a:num,pos[2],pos[3],pos[4]]
   call cursor(newpos)
   "echo(g:lists[trim(getline('.'))])
-  call neo4jbible#infowindow(g:lists[trim(getline('.'))])
+  call neo4jbible#infowindow(g:result_dict[trim(getline('.'))])
 endfunction
 
 function! neo4jbible#infowindow(info) abort
@@ -161,6 +166,7 @@ function! neo4jbible#echo_line_data(msg) abort
     call win_gotoid(g:current_window_id)
     "echo a:msg
     call append(line('.')-1, a:msg)
+    call append(line('.')-1, g:result_dict[a:msg])
 
     "call append(line('.')+1, '')
     let pos = getcurpos()
@@ -172,6 +178,8 @@ function! neo4jbible#echo_line_data(msg) abort
     call win_gotoid(g:current_window_id)
     for key in keys(g:neo4jbible#highlighted_lines)
       call append(line('.')-1, g:neo4jbible#highlighted_lines[key])
+      call append(line('.')-1, g:result_dict[g:neo4jbible#highlighted_lines[key]])
+      "call append(line('.')-1, g:result_dict[key])
       let pos = getcurpos()
       let newpos = [pos[1]+1 ,pos[2],pos[3],pos[4]]
       "call cursor(newpos)

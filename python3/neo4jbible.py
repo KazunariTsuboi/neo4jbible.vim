@@ -13,4 +13,4 @@ def neo4jbible_getlist2():
     return {"1ほげほげ":"a123", "2はげはげ":"b2222", "3ふげふげ":"c3333"}
 
 def neo4jbible_getStudynote(book,chapter):
-    return get_studynote.make_studynote_dic(book,chapter)
+    return get_studynote.make_studynote_list_and_dict(book,chapter)
