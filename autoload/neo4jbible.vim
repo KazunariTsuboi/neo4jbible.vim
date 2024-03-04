@@ -52,6 +52,53 @@ function! neo4jbible#make_windows(...) abort
     call neo4jbible#infowindow(g:result_dict[getline('.')])
 endfunction
 
+
+function! neo4jbible#make_windows_from_selected(text) abort
+
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    " 現在のウィンドウIDの取得
+    "python3 vim.command(f'let s:result = {neo4jbible_getStudynote(book=vim.eval("arg_book"), chapter=vim.eval("arg_chapter"))}')
+    python3 vim.command(f'let s:result = {neo4jbible_getStudynote_from_selectedtext(vim.eval("a:text"))}')
+    let g:result_list = s:result[0]
+    let g:result_dict = s:result[1]
+    if g:result_dict == {}
+      echo 'おそらくまだスタディノートが公開されていません'
+      return
+    endif
+
+    " 'NEO4JLISTS' バッファが存在している場合
+    if bufexists(g:neo4j_list_buffer)
+      " バッファがウィンドウに表示されている場合は`win_gotoid`でウィンドウに移動します
+      let winid = bufwinid(g:neo4j_list_buffer)
+      if winid isnot# -1
+        call win_gotoid(winid)
+  
+      " バッファがウィンドウに表示されていない場合は`sbuffer`で新しいウィンドウを作成してバッファを開きます
+      else
+        execute 'sbuffer' g:neo4j_list_buffer
+      endif
+  
+    else
+      " バッファが存在していない場合は`new`で新しいバッファを作成します
+      execute 'new' g:neo4j_list_buffer_right
+      execute 'vnew' g:neo4j_list_buffer
+  
+      " キーマッピングを定義します
+      call neo4jbible#set_keymap(g:neo4j_list_buffer)
+      call neo4jbible#set_keymap_infowindow(g:neo4j_list_buffer_right)
+  
+    endif
+  
+    " セッションファイルを表示する一時バッファのテキストをすべて削除して、取得したファイル一覧をバッファに挿入します
+    %delete _
+    " キーのみを抽出
+    let g:result_keys = map(copy(g:result_list), 'v:val[0]')
+    call setline(1, g:result_keys)
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'lock')
+    call neo4jbible#infowindow(g:result_dict[getline('.')])
+endfunction
+
+
 function! neo4jbible#set_keymap(bufname) abort
     let current_window_id = win_getid()
     let targetwindow_id = bufwinid(a:bufname)
@@ -223,4 +270,9 @@ endfunction
 function! neo4jbible#clearHighlight() abort
   call clearmatches()
   let g:neo4jbible#highlighted_lines = {}
+endfunction
+
+function! neo4jbible#getSelectedText()
+    let selected_text = @"
+    return selected_text
 endfunction

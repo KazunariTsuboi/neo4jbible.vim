@@ -412,7 +412,19 @@ def vs2str(vs):
 
     #txt = '"'+vs2book_dict[int(book)]+" "+ str(chapter) +":"+ str(varse)+'"'
     txt = f'{vs2book_dict[int(book)]} {str(chapter)}:{str(varse)}'
-    formated_txt = f'{txt:<15}'
+    formated_txt = f'{txt:<20}'
+    return formated_txt
+    
+def vs2str_ref(vs, ref_text):
+    # 66001001 という文字列を 啓示 1:1 に変換する
+    # 文字列formatに対応しているため バッファ表示用
+    varse = int(vs[-3:])
+    chapter = int(vs[-6:-3])
+    book = int(vs[:-6])
+
+    #txt = '"'+vs2book_dict[int(book)]+" "+ str(chapter) +":"+ str(varse)+'"'
+    txt = f'{vs2book_dict[int(book)]} {str(chapter)}:{str(varse)} {ref_text}'
+    formated_txt = f'{txt:<18}'
     return formated_txt
 
 def str2vs_chapter_range(str_bi):

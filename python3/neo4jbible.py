@@ -14,3 +14,6 @@ def neo4jbible_getlist2():
 
 def neo4jbible_getStudynote(book,chapter):
     return get_studynote.make_studynote_list_and_dict(book,chapter)
+
+def neo4jbible_getStudynote_from_selectedtext(text):
+    return get_studynote.make_studynote_list_from_text(text)

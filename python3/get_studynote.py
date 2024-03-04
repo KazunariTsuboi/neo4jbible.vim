@@ -27,6 +27,14 @@ def make_studynote_lists(text_with_tag):
     text = soup.get_text().strip()
     return [t.split(': ') for t in  text.split('\n')]
 
+def make_ref_lists(text_with_tag, cnt):
+    # 返り値 リスト（２次元配列）
+    # return[0...][0] 見出し語
+    # return[0...][1] 要素
+    soup = BeautifulSoup(text_with_tag, 'html.parser')
+    text = soup.get_text().strip()
+    return [[f"脚注*{str(cnt)}" , text]]
+
 def make_url_bistring(text):
     result =[biblesitation.str2vs(i) for i in biblesitation.citation_text(text)]
     result_text = ','.join(result)
@@ -40,6 +48,41 @@ def make_studynote_list_and_dict(book="ヨハネ",chapter="1"):
     for key in data['ranges'].keys():
         for refcomments in data['ranges'][key]['commentaries']:
             studynote_lists = make_studynote_lists(refcomments['content'])
+            
+            if refcomments['source'] != None:
+                for studynote in studynote_lists:
+                    refcomment_dic[biblesitation.vs2str(refcomments['source'])+'| ' + studynote[0]] = studynote[1]
+                    refcomment_list.append([biblesitation.vs2str(refcomments['source'])+'| ' + studynote[0] , studynote[1]])
+
+        cnt = 0
+        for refcomments in data['ranges'][key]['footnotes']:
+            cnt += 1
+            studynote_lists = make_ref_lists(refcomments['content'],cnt)
+            
+            if refcomments['source'] != None:
+                for studynote in studynote_lists:
+                    refcomment_dic[biblesitation.vs2str(refcomments['source'])+'| ' + studynote[0]] = studynote[1]
+                    refcomment_list.append([biblesitation.vs2str(refcomments['source'])+'| ' + studynote[0] , studynote[1]])
+    return [refcomment_list, refcomment_dic]
+
+def make_studynote_list_from_text(text):
+    url_bistring = make_url_bistring(text)
+    data = get_studynote_json(url_bistring)
+    refcomment_dic = {}
+    refcomment_list = []
+    for key in data['ranges'].keys():
+        for refcomments in data['ranges'][key]['commentaries']:
+            studynote_lists = make_studynote_lists(refcomments['content'])
+            
+            if refcomments['source'] != None:
+                for studynote in studynote_lists:
+                    refcomment_dic[biblesitation.vs2str(refcomments['source'])+'| ' + studynote[0]] = studynote[1]
+                    refcomment_list.append([biblesitation.vs2str(refcomments['source'])+'| ' + studynote[0] , studynote[1]])
+
+        cnt = 0
+        for refcomments in data['ranges'][key]['footnotes']:
+            cnt += 1
+            studynote_lists = make_ref_lists(refcomments['content'],cnt)
             
             if refcomments['source'] != None:
                 for studynote in studynote_lists:
