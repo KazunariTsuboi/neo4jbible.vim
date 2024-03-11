@@ -4,65 +4,41 @@ python3 import vim
 " 一覧作成用のバッファ名
 let g:neo4j_list_buffer = "NEO4JLISTS"
 let g:neo4j_list_buffer_right = "NEO4JLISTS_RIGHT"
-let g:current_window_id = win_getid()
+let g:neo4j_list_buffer_bible = "NEO4JLISTS_BIBLE"
 
-function! neo4jbible#make_windows(...) abort
+function! neo4jbible#make_windows_from_command(...) abort
+  let g:current_window_id = win_getid()
     let arg_book =    a:0 >= 1 ? a:1 : 'マタイ'
     let arg_chapter = a:0 >= 2 ? a:2 : '1'
 
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
     " 現在のウィンドウIDの取得
     python3 vim.command(f'let s:result = {neo4jbible_getStudynote(book=vim.eval("arg_book"), chapter=vim.eval("arg_chapter"))}')
-    let g:result_list = s:result[0]
-    let g:result_dict = s:result[1]
-    if g:result_dict == {}
-      echo 'おそらくまだスタディノートが公開されていません'
-      return
-    endif
-
-    " 'NEO4JLISTS' バッファが存在している場合
-    if bufexists(g:neo4j_list_buffer)
-      " バッファがウィンドウに表示されている場合は`win_gotoid`でウィンドウに移動します
-      let winid = bufwinid(g:neo4j_list_buffer)
-      if winid isnot# -1
-        call win_gotoid(winid)
-  
-      " バッファがウィンドウに表示されていない場合は`sbuffer`で新しいウィンドウを作成してバッファを開きます
-      else
-        execute 'sbuffer' g:neo4j_list_buffer
-      endif
-  
-    else
-      " バッファが存在していない場合は`new`で新しいバッファを作成します
-      execute 'new' g:neo4j_list_buffer_right
-      execute 'vnew' g:neo4j_list_buffer
-  
-      " キーマッピングを定義します
-      call neo4jbible#set_keymap(g:neo4j_list_buffer)
-      call neo4jbible#set_keymap_infowindow(g:neo4j_list_buffer_right)
-  
-    endif
-  
-    " セッションファイルを表示する一時バッファのテキストをすべて削除して、取得したファイル一覧をバッファに挿入します
-    %delete _
-    " キーのみを抽出
-    let g:result_keys = map(copy(g:result_list), 'v:val[0]')
-    call setline(1, g:result_keys)
-    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'lock')
-    call neo4jbible#infowindow(g:result_dict[getline('.')])
+    call neo4jbible#make_windows(s:result)
 endfunction
 
-
 function! neo4jbible#make_windows_from_selected(text) abort
+    let g:current_window_id = win_getid()
 
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
     " 現在のウィンドウIDの取得
-    "python3 vim.command(f'let s:result = {neo4jbible_getStudynote(book=vim.eval("arg_book"), chapter=vim.eval("arg_chapter"))}')
     python3 vim.command(f'let s:result = {neo4jbible_getStudynote_from_selectedtext(vim.eval("a:text"))}')
+    call neo4jbible#make_windows(s:result)
+endfunction
+
+function! neo4jbible#make_windows(result) abort
     let g:result_list = s:result[0]
     let g:result_dict = s:result[1]
     if g:result_dict == {}
       echo 'おそらくまだスタディノートが公開されていません'
+      if bufexists(g:neo4j_list_buffer)
+        " バッファがウィンドウに表示されている場合は`win_gotoid`でウィンドウに移動します
+        let winid = bufwinid(g:neo4j_list_buffer)
+        if winid isnot# -1
+          call win_gotoid(winid)
+          %delete _
+        endif
+      endif
       return
     endif
 
@@ -80,8 +56,11 @@ function! neo4jbible#make_windows_from_selected(text) abort
   
     else
       " バッファが存在していない場合は`new`で新しいバッファを作成します
-      execute 'new' g:neo4j_list_buffer_right
+      execute 'new' g:neo4j_list_buffer_bible
       execute 'vnew' g:neo4j_list_buffer
+      execute "normal \<C-W>l"
+      execute 'new' g:neo4j_list_buffer_right
+      execute "normal \<C-W>h"
   
       " キーマッピングを定義します
       call neo4jbible#set_keymap(g:neo4j_list_buffer)
@@ -97,6 +76,8 @@ function! neo4jbible#make_windows_from_selected(text) abort
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'lock')
     call neo4jbible#infowindow(g:result_dict[getline('.')])
 endfunction
+
+
 
 
 function! neo4jbible#set_keymap(bufname) abort
@@ -124,6 +105,7 @@ function! neo4jbible#set_keymap(bufname) abort
         nnoremap <silent> <buffer>
           \ <Plug>(session-close)
           \ :<C-u> call neo4jbible#clearHighlight() <CR>
+          \ :<C-u> execute 'bwipeout!' g:neo4j_list_buffer_bible <CR>
           \ :<C-u> execute 'bwipeout!' g:neo4j_list_buffer_right <CR>
           \ :<C-u> execute 'bwipeout!' g:neo4j_list_buffer <CR>
         nnoremap <silent> <buffer>
@@ -157,6 +139,7 @@ function! neo4jbible#set_keymap_infowindow(bufname) abort
       call win_gotoid(targetwindow_id)
         nnoremap <silent> <buffer>
           \ <Plug>(session-close)
+          \ :<C-u> execute 'bwipeout!' g:neo4j_list_buffer_bible <CR>
           \ :<C-u> execute 'bwipeout!' g:neo4j_list_buffer_right <CR>
           \ :<C-u> execute 'bwipeout!' g:neo4j_list_buffer <CR>
         nnoremap <silent> <buffer>
@@ -180,12 +163,23 @@ function! neo4jbible#move(num) abort
   call cursor(newpos)
   "echo(g:lists[trim(getline('.'))])
   call neo4jbible#infowindow(g:result_dict[trim(getline('.'))])
+  python3 line = vim.eval('getline(".")')
+  python3 bible_content = neo4jbible_getBible_content(line)
+  python3 vim.command('let s:bible_content = "{}"'.format(bible_content.replace('"', '\\"')))
+  "echo(s:bible_content)
+  call neo4jbible#biblewindow(s:bible_content)
 endfunction
 
 function! neo4jbible#infowindow(info) abort
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer_right, 'unlock')
     call setbufline(g:neo4j_list_buffer_right, 1, a:info)
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer_right, 'lock')
+endfunction
+
+function! neo4jbible#biblewindow(info) abort
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer_bible, 'unlock')
+    call setbufline(g:neo4j_list_buffer_bible, 1, a:info)
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer_bible, 'lock')
 endfunction
 
 function! neo4jbible#lock_unlock_window(bufname, lock_flag) abort

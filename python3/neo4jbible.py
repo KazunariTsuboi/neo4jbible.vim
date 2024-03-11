@@ -1,5 +1,6 @@
 import sys,os
 import get_studynote
+import bible
 import vim
 
 def neo4jbible_testecho():
@@ -17,3 +18,6 @@ def neo4jbible_getStudynote(book,chapter):
 
 def neo4jbible_getStudynote_from_selectedtext(text):
     return get_studynote.make_studynote_list_from_text(text)
+
+def neo4jbible_getBible_content(text):
+    return bible.get_bible(text)
