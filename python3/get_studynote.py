@@ -14,7 +14,7 @@ def get_studynote_json(url_bistring):
     #urlpath = r"https://www.jw.org/ja/%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%E3%83%BC/%E8%81%96%E6%9B%B8/%E3%82%B9%E3%82%BF%E3%83%87%E3%82%A3%E3%83%BC%E7%89%88%E8%81%96%E6%9B%B8/%E5%90%84%E6%9B%B8/json/data/40001000-40001999"
     urlpath = URL + url_bistring
     urlpath = urllib.parse.unquote(urlpath)
-    res=requests.get(urlpath, headers=headers)
+    res=requests.request('GET',urlpath, headers=headers,timeout=(5,5))
     data = json.loads(res.text)
     return data
 
