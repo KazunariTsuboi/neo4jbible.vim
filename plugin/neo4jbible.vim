@@ -14,6 +14,7 @@ let g:loaded_neo4jbible = 1
 " <q-args> は引数を意味します
 "command! -nargs=1 SessionCreate call session#create_session(<q-args>)
 
-command! -nargs=* Neo4jbible call neo4jbible#make_windows_from_command(<f-args>)
-command! -nargs=* Neo4jbibleText call neo4jbible#make_windows_from_selected(neo4jbible#getSelectedText())
+command! -nargs=* BibleStudyNote call neo4jbible#make_windows_from_command(<f-args>)
+command! -nargs=* BibleFromText call neo4jbible#make_windows_from_selected(neo4jbible#getSelectedText())
+command! -nargs=* BibleFromTextNoWeb call neo4jbible#make_windows_from_selected_noweb(neo4jbible#getSelectedText())
 

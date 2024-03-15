@@ -1,4 +1,5 @@
 py3file <sfile>:h:h/python3/neo4jbible.py
+py3file <sfile>:h:h/python3/bible.py
 python3 import vim
 
 " 一覧作成用のバッファ名
@@ -23,6 +24,15 @@ function! neo4jbible#make_windows_from_selected(text) abort
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
     " 現在のウィンドウIDの取得
     python3 vim.command(f'let s:result = {neo4jbible_getStudynote_from_selectedtext(vim.eval("a:text"))}')
+    call neo4jbible#make_windows(s:result)
+endfunction
+
+function! neo4jbible#make_windows_from_selected_noweb(text) abort
+    let g:current_window_id = win_getid()
+
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    " 現在のウィンドウIDの取得
+    python3 vim.command(f'let s:result = {neo4jbible_getBible_noweb(vim.eval("a:text"))}')
     call neo4jbible#make_windows(s:result)
 endfunction
 
@@ -56,10 +66,10 @@ function! neo4jbible#make_windows(result) abort
   
     else
       " バッファが存在していない場合は`new`で新しいバッファを作成します
-      execute 'new' g:neo4j_list_buffer_bible
+      execute 'new' g:neo4j_list_buffer_right
       execute 'vnew' g:neo4j_list_buffer
       execute "normal \<C-W>l"
-      execute 'new' g:neo4j_list_buffer_right
+      execute 'new' g:neo4j_list_buffer_bible
       execute "normal \<C-W>h"
   
       " キーマッピングを定義します
@@ -164,10 +174,11 @@ function! neo4jbible#move(num) abort
   "echo(g:lists[trim(getline('.'))])
   call neo4jbible#infowindow(g:result_dict[trim(getline('.'))])
   python3 line = vim.eval('getline(".")')
-  python3 bible_content = neo4jbible_getBible_content(line)
+  python3 bible_content = get_bible(line)
   python3 vim.command('let s:bible_content = "{}"'.format(bible_content.replace('"', '\\"')))
   "echo(s:bible_content)
-  call neo4jbible#biblewindow(s:bible_content)
+  call neo4jbible#biblewindow(getline("."),0)
+  call neo4jbible#biblewindow(s:bible_content,1)
 endfunction
 
 function! neo4jbible#infowindow(info) abort
@@ -176,9 +187,9 @@ function! neo4jbible#infowindow(info) abort
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer_right, 'lock')
 endfunction
 
-function! neo4jbible#biblewindow(info) abort
+function! neo4jbible#biblewindow(info,offset) abort
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer_bible, 'unlock')
-    call setbufline(g:neo4j_list_buffer_bible, 1, a:info)
+    call setbufline(g:neo4j_list_buffer_bible, 1+a:offset, a:info)
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer_bible, 'lock')
 endfunction
 
@@ -203,10 +214,16 @@ endfunction
 
 
 function! neo4jbible#echo_line_data(msg) abort
+
   if g:neo4jbible#highlighted_lines == {}
+    python3 line = vim.eval('getline(".")')
+    python3 bible_content = get_bible(line)
+    python3 vim.command('let s:bible_content = "{}"'.format(bible_content.replace('"', '\\"')))
+
     call win_gotoid(g:current_window_id)
     "echo a:msg
     call append(line('.')-1, a:msg)
+    call append(line('.')-1, s:bible_content)
     call append(line('.')-1, g:result_dict[a:msg])
 
     "call append(line('.')+1, '')
@@ -218,7 +235,13 @@ function! neo4jbible#echo_line_data(msg) abort
   else
     call win_gotoid(g:current_window_id)
     for key in keys(g:neo4jbible#highlighted_lines)
+      let s:key_bi = g:neo4jbible#highlighted_lines[key]
+      python3 line = vim.eval('s:key_bi')
+      python3 bible_content = get_bible(line)
+      python3 vim.command('let s:bible_content = "{}"'.format(bible_content.replace('"', '\\"')))
+
       call append(line('.')-1, g:neo4jbible#highlighted_lines[key])
+      call append(line('.')-1, s:bible_content)
       call append(line('.')-1, g:result_dict[g:neo4jbible#highlighted_lines[key]])
       "call append(line('.')-1, g:result_dict[key])
       let pos = getcurpos()

@@ -35,6 +35,14 @@ def make_ref_lists(text_with_tag, cnt):
     text = soup.get_text().strip()
     return [[f"脚注*{str(cnt)}" , text]]
 
+def make_verse_text(text_with_tag):
+    # 返り値 リスト（２次元配列）
+    # return[0...][0] なし
+    # return[0...][1] 要素
+    soup = BeautifulSoup(text_with_tag, 'html.parser')
+    text = soup.get_text().strip()
+    return text.replace('\xa0',' ')
+
 def make_url_bistring(text):
     result =[biblesitation.str2vs(i) for i in biblesitation.citation_text(text)]
     result_text = ','.join(result)
@@ -65,12 +73,22 @@ def make_studynote_list_and_dict(book="ヨハネ",chapter="1"):
                     refcomment_list.append([biblesitation.vs2str(refcomments['source'])+'| ' + studynote[0] , studynote[1]])
     return [refcomment_list, refcomment_dic]
 
-def make_studynote_list_from_text(text):
+def make_studynote_list_from_text2(text):
     url_bistring = make_url_bistring(text)
     data = get_studynote_json(url_bistring)
     refcomment_dic = {}
     refcomment_list = []
     for key in data['ranges'].keys():
+        for verse in data['ranges'][key]['verses']:
+            verse_text = make_verse_text(verse['content'])
+            # 聖句内容を投入する場合
+            #refcomment_dic[verse['standardCitation'].replace('&nbsp;',' ')] = verse_text
+            #refcomment_list.append([verse['standardCitation'].replace('&nbsp;',' '), verse_text])
+            # 聖句の内容は投入せずに bible.get_bible を使った情報を表示させる場合
+            bi_citationed = biblesitation.citation_text(verse['standardCitation'].replace('&nbsp;',' '))
+            refcomment_dic[bi_citationed[0]] = ''
+            refcomment_list.append([bi_citationed[0], ''])
+
         for refcomments in data['ranges'][key]['commentaries']:
             studynote_lists = make_studynote_lists(refcomments['content'])
             
@@ -88,4 +106,16 @@ def make_studynote_list_from_text(text):
                 for studynote in studynote_lists:
                     refcomment_dic[biblesitation.vs2str(refcomments['source'])+'| ' + studynote[0]] = studynote[1]
                     refcomment_list.append([biblesitation.vs2str(refcomments['source'])+'| ' + studynote[0] , studynote[1]])
+
+    return [refcomment_list, refcomment_dic]
+
+def make_biblelist_from_text_noweb(text):
+    bible_citation_list = biblesitation.citation_text(text)
+    refcomment_dic = {}
+    refcomment_list = []
+
+    for bi in bible_citation_list:
+        refcomment_dic[bi] = ''
+        refcomment_list.append([bi, ''])
+
     return [refcomment_list, refcomment_dic]
