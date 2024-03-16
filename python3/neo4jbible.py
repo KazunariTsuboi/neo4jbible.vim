@@ -21,3 +21,6 @@ def neo4jbible_getStudynote_from_selectedtext(text):
 
 def neo4jbible_getBible_noweb(text):
     return get_studynote.make_biblelist_from_text_noweb(text)
+
+def neo4jbible_get_neo4j_bible_merginalref(text):
+    return get_studynote.get_neo4j_bible_merginalref(text)

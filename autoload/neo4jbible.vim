@@ -36,6 +36,22 @@ function! neo4jbible#make_windows_from_selected_noweb(text) abort
     call neo4jbible#make_windows(s:result)
 endfunction
 
+function! neo4jbible#make_windows_bible_merginalref_args(...) abort
+    let arg_addr = a:1.' '.a:2
+    let g:current_window_id = win_getid()
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_merginalref(vim.eval("arg_addr"))}')
+    call neo4jbible#make_windows(s:result)
+endfunction
+
+function! neo4jbible#make_windows_bible_merginalref(text) abort
+    let g:current_window_id = win_getid()
+    echo(a:text)
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_merginalref(vim.eval("a:text"))}')
+    call neo4jbible#make_windows(s:result)
+endfunction
+
 function! neo4jbible#make_windows(result) abort
     let g:result_list = s:result[0]
     let g:result_dict = s:result[1]
@@ -183,7 +199,7 @@ endfunction
 
 function! neo4jbible#infowindow(info) abort
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer_right, 'unlock')
-    call setbufline(g:neo4j_list_buffer_right, 1, a:info)
+    call InsertNewLine(g:neo4j_list_buffer_right, 1, a:info)
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer_right, 'lock')
 endfunction
 
@@ -292,4 +308,12 @@ endfunction
 function! neo4jbible#getSelectedText()
     let selected_text = @"
     return selected_text
+endfunction
+
+function! InsertNewLine(buffer,num, text)
+    " 改行で分割して配列にする
+    let lines = split(a:text, '&return&')
+
+    " 現在の行に配列の内容を挿入
+    call setbufline(a:buffer, a:num, lines)
 endfunction

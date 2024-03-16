@@ -3,6 +3,7 @@ import requests, urllib
 from lxml import html
 from bs4 import BeautifulSoup
 import json
+import config
 
 #from biblesitation import vs2str, str2vs_chapter_range
 import biblesitation
@@ -119,3 +120,66 @@ def make_biblelist_from_text_noweb(text):
         refcomment_list.append([bi, ''])
 
     return [refcomment_list, refcomment_dic]
+
+def get_neo4j_bible_merginalref(addr):
+    addr = addr.strip()
+    from neo4j import GraphDatabase, RoutingControl
+    # neo4j serverに接続するdriverの設定
+    driver = GraphDatabase.driver(
+        'neo4j://localhost:7687', 
+        auth=('neo4j', config.password))
+
+    def target_to_bible(driver, name):
+        records, _, _ = driver.execute_query("""
+            MATCH (target:Bible)-[r]->(bi:Bible) 
+            WHERE target.addr = $name
+            RETURN r, bi.addr
+            """,
+            name=name, database_="biblestudy", routing_=RoutingControl.READ,
+        )
+        
+        result = []
+        for record in records:
+            result.append([f'{record["bi.addr"]}', f'--> {record["r"].type}'])
+        return result
+
+    def target_from_bible(driver, name):
+        records, _, _ = driver.execute_query("""
+            MATCH (target:Bible)<-[r]-(bi:Bible) 
+            WHERE target.addr = $name
+            RETURN r, bi.addr
+            """,
+            name=name, database_="biblestudy", routing_=RoutingControl.READ,
+        )
+        result = []
+        for record in records:
+            result.append([f'{record["bi.addr"]}', f'<-- {record["r"].type}'])
+        return result
+
+    def merge_result_lists(results_lists):
+        result_dic = {}
+        result_list = []
+        for results_list in results_lists:
+            if result_dic.get(results_list[0], False):
+                result_dic[results_list[0]].append(results_list[1])
+            else:
+                result_dic[results_list[0]] = [results_list[1]]
+                
+        final_dic ={}
+        final_list =[]
+        for key in result_dic.keys():
+            final_dic[key] = "&return&".join(result_dic[key])
+            final_list += [[key,"&return&".join(result_dic[key])]]
+            
+        return [final_list, final_dic]
+
+    def main(name) :
+        final = []
+        final += target_to_bible(driver,name)
+        final += target_from_bible(driver, name)
+
+        finish = merge_result_lists(final)
+        return finish
+    
+    return main(addr)
+
