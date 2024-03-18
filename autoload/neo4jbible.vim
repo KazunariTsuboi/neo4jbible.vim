@@ -142,6 +142,10 @@ function! neo4jbible#set_keymap(bufname) abort
         nnoremap <silent> <buffer>
           \ <Plug>(session-select)
           \ :<C-u> call neo4jbible#selectLine()<CR>
+        nnoremap <silent> <buffer>
+          \ <Plug>(neo4j-open-node)
+          \ :<C-u> call neo4jbible#openNode() <CR>
+          \ :<C-u> echo('open-node')<CR>
     
         " <Plug>マップをキーにマッピングします
         " `q` は最終的に :<C-u>bwipeout!<CR>
@@ -152,6 +156,7 @@ function! neo4jbible#set_keymap(bufname) abort
         nmap <buffer> q <Plug>(session-close)
         nmap <buffer> <CR> <Plug>(session-open)
         nmap <buffer> z <Plug>(session-select)
+        nmap <buffer> <S-m> <Plug>(neo4j-open-node)
 
       call win_gotoid(current_window_id)
     endif
@@ -197,14 +202,21 @@ function! neo4jbible#move(num) abort
   call neo4jbible#biblewindow(s:bible_content,1)
 endfunction
 
+function! neo4jbible#openNode() abort
+  let text = getline(".")
+  call neo4jbible#make_windows_bible_merginalref(text)
+endfunction
+
 function! neo4jbible#infowindow(info) abort
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer_right, 'unlock')
+    call neo4jbible#delete_window(g:neo4j_list_buffer_right)
     call InsertNewLine(g:neo4j_list_buffer_right, 1, a:info)
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer_right, 'lock')
 endfunction
 
 function! neo4jbible#biblewindow(info,offset) abort
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer_bible, 'unlock')
+    "call neo4jbible#delete_window(g:neo4j_list_buffer_bible)
     call setbufline(g:neo4j_list_buffer_bible, 1+a:offset, a:info)
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer_bible, 'lock')
 endfunction
@@ -236,7 +248,9 @@ function! neo4jbible#echo_line_data(msg) abort
     python3 bible_content = get_bible(line)
     python3 vim.command('let s:bible_content = "{}"'.format(bible_content.replace('"', '\\"')))
 
-    call win_gotoid(g:current_window_id)
+    "call win_gotoid(g:current_window_id)
+    call win_gotoid(neo4jbible#GetOtherWindowId())
+
     "echo a:msg
     call append(line('.')-1, a:msg)
     call append(line('.')-1, s:bible_content)
@@ -249,7 +263,9 @@ function! neo4jbible#echo_line_data(msg) abort
     call win_gotoid(bufwinid(g:neo4j_list_buffer))
     normal 0
   else
-    call win_gotoid(g:current_window_id)
+    "call win_gotoid(g:current_window_id)
+    call win_gotoid(GetOtherWindowId())
+
     for key in keys(g:neo4jbible#highlighted_lines)
       let s:key_bi = g:neo4jbible#highlighted_lines[key]
       python3 line = vim.eval('s:key_bi')
@@ -316,4 +332,40 @@ function! InsertNewLine(buffer,num, text)
 
     " 現在の行に配列の内容を挿入
     call setbufline(a:buffer, a:num, lines)
+endfunction
+
+function! neo4jbible#GetOtherWindowId()
+  " 現在のタブページ内のすべてのウィンドウをループします。
+  for winid in range(1, winnr('$'))
+    " ウィンドウのバッファ名を取得します。
+    let bufname = bufname(winbufnr(winid))
+    " 特定の名前でない場合、そのウィンドウIDを返します。
+    if bufname != g:neo4j_list_buffer && bufname != g:neo4j_list_buffer_right && bufname != g:neo4j_list_buffer_bible
+      return winid
+    endif
+  endfor
+  " 該当するウィンドウがない場合は-1を返します。
+  return -1
+
+"  " 現在のタブページ内のすべてのウィンドウをループします。
+"  for winid in win_findbuf(bufnr('%'))
+"    " ウィンドウのバッファ名を取得します。
+"    let bufname = bufname(winbufnr(winid))
+"    " 特定の名前でない場合、そのウィンドウIDを返します。
+"    if bufname != g:neo4j_list_buffer && bufname != g:neo4j_list_buffer_right && bufname != g:neo4j_list_buffer_bible
+"      return winid
+"    endif
+"  endfor
+"  " 該当するウィンドウがない場合は-1を返します。
+"  return -1
+endfunction
+
+function! neo4jbible#delete_window(bufname) abort
+    let current_window_id = win_getid()
+    let targetwindow_id = bufwinid(a:bufname)
+    if targetwindow_id != -1
+      call win_gotoid(targetwindow_id)
+      %delete _
+      call win_gotoid(current_window_id)
+    endif
 endfunction
