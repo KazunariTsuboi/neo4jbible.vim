@@ -128,14 +128,13 @@ def get_neo4j_bible_merginalref(addr):
     driver = GraphDatabase.driver(
         'neo4j://localhost:7687', 
         auth=('neo4j', config.password))
-
     def target_to_bible(driver, name):
         records, _, _ = driver.execute_query("""
             MATCH (target:Bible)-[r]->(bi:Bible) 
             WHERE target.addr = $name
             RETURN r, bi.addr
             """,
-            name=name, database_="biblestudy", routing_=RoutingControl.READ,
+            name=name, database_=config.db_name, routing_=RoutingControl.READ,
         )
         
         result = []
@@ -149,7 +148,7 @@ def get_neo4j_bible_merginalref(addr):
             WHERE target.addr = $name
             RETURN r, bi.addr
             """,
-            name=name, database_="biblestudy", routing_=RoutingControl.READ,
+            name=name, database_=config.db_name, routing_=RoutingControl.READ,
         )
         result = []
         for record in records:

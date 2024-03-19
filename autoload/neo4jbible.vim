@@ -7,6 +7,74 @@ let g:neo4j_list_buffer = "NEO4JLISTS"
 let g:neo4j_list_buffer_right = "NEO4JLISTS_RIGHT"
 let g:neo4j_list_buffer_bible = "NEO4JLISTS_BIBLE"
 
+" 履歴を保持するリスト
+let g:neo4j_history = []
+let g:neo4j_unhistory = []
+
+" 履歴にアイテムを追加する関数
+function! neo4jbible#AddToHistory(item)
+    " リストの長さが20を超えた場合、古いアイテムを削除
+    if len(g:neo4j_history) >= 20
+        call remove(g:neo4j_history, 0)
+    endif
+    " 新しいアイテムをリストの末尾に追加
+    call add(g:neo4j_history, a:item)
+endfunction
+
+
+" 履歴（元に戻す）にアイテムを追加する関数
+function! neo4jbible#AddToUnHistory(item)
+    " リストの長さが20を超えた場合、古いアイテムを削除
+    if len(g:neo4j_unhistory) >= 20
+        call remove(g:neo4j_unhistory, 0)
+    endif
+    " 新しいアイテムをリストの末尾に追加
+    call add(g:neo4j_unhistory, a:item)
+endfunction
+
+" 履歴を表示する関数
+function! neo4jbible#ShowHistory()
+    echo join(g:neo4j_history, "\n")
+endfunction
+
+function! neo4jbible#make_windows_History() abort
+    let g:current_window_id = win_getid()
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+
+    if len(g:neo4j_history) > 1
+      let last_item = g:neo4j_history[-1]
+      call neo4jbible#make_windows(last_item)
+      call neo4jbible#AddToUnHistory(last_item)
+      call remove(g:neo4j_history, len(g:neo4j_history) - 1)
+    elseif len(g:neo4j_history) == 1
+      let last_item = g:neo4j_history[-1]
+      call neo4jbible#make_windows(last_item)
+      call neo4jbible#AddToUnHistory(last_item)
+    else
+        echo "履歴は空です。"
+        return
+    endif
+endfunction
+
+function! neo4jbible#make_windows_UnHistory() abort
+    let g:current_window_id = win_getid()
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+
+    if len(g:neo4j_unhistory) > 1
+      let last_item = g:neo4j_unhistory[-1]
+      call neo4jbible#make_windows(last_item)
+      call neo4jbible#AddToHistory(last_item)
+      call remove(g:neo4j_unhistory, len(g:neo4j_unhistory) - 1)
+    elseif len(g:neo4j_unhistory) == 1
+      let last_item = g:neo4j_unhistory[-1]
+      call neo4jbible#make_windows(last_item)
+      call neo4jbible#AddToUnHistory(last_item)
+    else
+        echo "もとに戻すは空です"
+        return
+    endif
+endfunction
+
 function! neo4jbible#make_windows_from_command(...) abort
   let g:current_window_id = win_getid()
     let arg_book =    a:0 >= 1 ? a:1 : 'マタイ'
@@ -16,6 +84,7 @@ function! neo4jbible#make_windows_from_command(...) abort
     " 現在のウィンドウIDの取得
     python3 vim.command(f'let s:result = {neo4jbible_getStudynote(book=vim.eval("arg_book"), chapter=vim.eval("arg_chapter"))}')
     call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
 endfunction
 
 function! neo4jbible#make_windows_from_selected(text) abort
@@ -25,6 +94,7 @@ function! neo4jbible#make_windows_from_selected(text) abort
     " 現在のウィンドウIDの取得
     python3 vim.command(f'let s:result = {neo4jbible_getStudynote_from_selectedtext(vim.eval("a:text"))}')
     call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
 endfunction
 
 function! neo4jbible#make_windows_from_selected_noweb(text) abort
@@ -34,6 +104,7 @@ function! neo4jbible#make_windows_from_selected_noweb(text) abort
     " 現在のウィンドウIDの取得
     python3 vim.command(f'let s:result = {neo4jbible_getBible_noweb(vim.eval("a:text"))}')
     call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
 endfunction
 
 function! neo4jbible#make_windows_bible_merginalref_args(...) abort
@@ -42,6 +113,7 @@ function! neo4jbible#make_windows_bible_merginalref_args(...) abort
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
     python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_merginalref(vim.eval("arg_addr"))}')
     call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
 endfunction
 
 function! neo4jbible#make_windows_bible_merginalref(text) abort
@@ -50,11 +122,12 @@ function! neo4jbible#make_windows_bible_merginalref(text) abort
     call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
     python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_merginalref(vim.eval("a:text"))}')
     call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
 endfunction
 
 function! neo4jbible#make_windows(result) abort
-    let g:result_list = s:result[0]
-    let g:result_dict = s:result[1]
+    let g:result_list = a:result[0]
+    let g:result_dict = a:result[1]
     if g:result_dict == {}
       echo 'おそらくまだスタディノートが公開されていません'
       if bufexists(g:neo4j_list_buffer)
@@ -145,7 +218,12 @@ function! neo4jbible#set_keymap(bufname) abort
         nnoremap <silent> <buffer>
           \ <Plug>(neo4j-open-node)
           \ :<C-u> call neo4jbible#openNode() <CR>
-          \ :<C-u> echo('open-node')<CR>
+        nnoremap <silent> <buffer>
+          \ <Plug>(neo4j-history-back)
+          \ :<C-u> call neo4jbible#make_windows_History() <CR>
+        nnoremap <silent> <buffer>
+          \ <Plug>(neo4j-history-next)
+          \ :<C-u> call neo4jbible#make_windows_UnHistory() <CR>
     
         " <Plug>マップをキーにマッピングします
         " `q` は最終的に :<C-u>bwipeout!<CR>
@@ -157,6 +235,8 @@ function! neo4jbible#set_keymap(bufname) abort
         nmap <buffer> <CR> <Plug>(session-open)
         nmap <buffer> z <Plug>(session-select)
         nmap <buffer> <S-m> <Plug>(neo4j-open-node)
+        nmap <buffer> u <Plug>(neo4j-history-back)
+        nmap <buffer> <C-r> <Plug>(neo4j-history-next)
 
       call win_gotoid(current_window_id)
     endif
@@ -338,10 +418,10 @@ function! neo4jbible#GetOtherWindowId()
   " 現在のタブページ内のすべてのウィンドウをループします。
   for winid in range(1, winnr('$'))
     " ウィンドウのバッファ名を取得します。
-    let bufname = bufname(winbufnr(winid))
+    let bufname = bufname(winid)
     " 特定の名前でない場合、そのウィンドウIDを返します。
     if bufname != g:neo4j_list_buffer && bufname != g:neo4j_list_buffer_right && bufname != g:neo4j_list_buffer_bible
-      return winid
+      return bufwinid(winid)
     endif
   endfor
   " 該当するウィンドウがない場合は-1を返します。

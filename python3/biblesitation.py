@@ -284,11 +284,11 @@ BOOKS_sp1 = r'(オバ|フィレ|ユダ|ヨハ三|ヨハ二)'
 
 BOOKS_sp2 = r'(オバ|オバデヤ|オバデヤ書|フィレ|フィレモン|フィレモンへの手紙|ユダ|ユダの手紙|ヨハネの第三の手紙|ヨハネの第二の手紙|ヨハネ第三|ヨハネ第二|ヨハ三|ヨハ二)'
 
-PATTERN_A = r"((%s)( |（)(\d+):(\d+)((，\d+)*(-\d+)*)*(; (\d+):(\d+)((，\d+)*(-\d+)*)*)*)"%(BOOKS)
-PATTERN_A_sp = r"((%s)( |（)(\d+)(?!節)((，\d+)*(-\d+)*)*(; (\d+):(\d+)((，\d+)*(-\d+)*)*)*)"%(BOOKS_sp1)
+PATTERN_A = r"((%s)( |（)(\d+):(\d+)(((，|, ?)\d+)*(-\d+)*)*(; (\d+):(\d+)(((，|, ?)\d+)*(-\d+)*)*)*)"%(BOOKS)
+PATTERN_A_sp = r"((%s)( |（)(\d+)(?!節)(((，|, ?)\d+)*(-\d+)*)*(; (\d+):(\d+)(((，|, ?)\d+)*(-\d+)*)*)*)"%(BOOKS_sp1)
 
-PATTERN_B = r"((%s)( |（)((\d+)(章|編)\[?(\d+)節?\]?，?)*(((，|と)\d+)*((-|から)\d+)*)*節\]?((; |，|と|や|または?)*(\d+)(章|編)\[?(\d+)((，\d+)*((-|から)\d+)*)*節?\]?)*)"%(BOOKS)
-PATTERN_B_sp =          r"((%s)( |（)(\[?(\d+)節?\]?，?)*(((，|と)\d+)*((-|から)\d+)*)*節\]?((; |，|と|や|または?)*(\d+)(章|編)\[?(\d+)((，\d+)*((-|から)\d+)*)*節?\]?)*)"%(BOOKS_sp2)
+PATTERN_B = r"((%s)( |（)((\d+)(章|編)\[?(\d+)節?\]?，?)*(((，|と|, )\d+)*((-|から)\d+)*)*節\]?((; |，|, |と|や|または?)*(\d+)(章|編)\[?(\d+)((，\d+)*((-|から)\d+)*)*節?\]?)*)"%(BOOKS)
+PATTERN_B_sp =          r"((%s)( |（)(\[?(\d+)節?\]?，?)*(((，|と|, )\d+)*((-|から)\d+)*)*節\]?((; |，|, |と|や|または?)*(\d+)(章|編)\[?(\d+)((，\d+)*((-|から)\d+)*)*節?\]?)*)"%(BOOKS_sp2)
 
 prog_A = re.compile(PATTERN_A)
 prog_A_sp = re.compile(PATTERN_A_sp)
@@ -308,6 +308,8 @@ prog_1 = re.compile(r'[;]')
 prog_cap = re.compile(r'[: ]')
 
 prog_ex1 = re.compile(r'，(\d+章)')
+
+prog_DeniteBible = re.compile(r'^\d+((, ?|-)\d+)+$')
 
 def citation_character(text):
     # マタイ 10章47節等の形式
@@ -372,6 +374,23 @@ def splitVerse(nml_bookname,cap,v4):
                 count = txt2 - txt1
                 for i in range(count + 1):
                     result.append(nml_bookname + " " + cap + ":" + str(txt1 + i))
+
+    elif prog_DeniteBible.match(v4):
+        for v in v4.split(","):
+            v = v.strip()
+
+            if prog_C.match(v):# 最もシンプルな形 マタイ 10:47 のみとマッチ
+                result.append(nml_bookname + " " + cap + ":" + v)
+
+            # ハイフンで区切られた形　マタイ 10:21-23にマッチ
+            elif prog_E.match(v):
+                txt1 = int(v.split("-")[0])
+                txt2 = int(v.split("-")[1])
+                count = txt2 - txt1
+                for i in range(count + 1):
+                    result.append(nml_bookname + " " + cap + ":" + str(txt1 + i))
+        #result.append(nml_bookname + " " + cap + ":" + v)
+
     else:
         return ["************",nml_bookname,cap,v4, "*****************"]
     
