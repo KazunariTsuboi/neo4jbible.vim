@@ -167,8 +167,8 @@ def get_neo4j_bible_merginalref(addr):
         final_dic ={}
         final_list =[]
         for key in result_dic.keys():
-            final_dic[key] = "&return&".join(result_dic[key])
-            final_list += [[key,"&return&".join(result_dic[key])]]
+            final_dic[key] = "\n".join(result_dic[key])
+            final_list += [[key,"\n".join(result_dic[key])]]
             
         return [final_list, final_dic]
 

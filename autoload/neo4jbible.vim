@@ -328,13 +328,12 @@ function! neo4jbible#echo_line_data(msg) abort
     python3 bible_content = get_bible(line)
     python3 vim.command('let s:bible_content = "{}"'.format(bible_content.replace('"', '\\"')))
 
-    "call win_gotoid(g:current_window_id)
     call win_gotoid(neo4jbible#GetOtherWindowId())
 
-    "echo a:msg
     call append(line('.')-1, a:msg)
     call append(line('.')-1, s:bible_content)
-    call append(line('.')-1, g:result_dict[a:msg])
+    "call append(line('.')-1, g:result_dict[a:msg])
+    call InsertNewLine_for_paste(bufnr(), line('.')-1, g:result_dict[a:msg])
 
     "call append(line('.')+1, '')
     let pos = getcurpos()
@@ -344,7 +343,7 @@ function! neo4jbible#echo_line_data(msg) abort
     normal 0
   else
     "call win_gotoid(g:current_window_id)
-    call win_gotoid(GetOtherWindowId())
+    call win_gotoid(neo4jbible#GetOtherWindowId())
 
     for key in keys(g:neo4jbible#highlighted_lines)
       let s:key_bi = g:neo4jbible#highlighted_lines[key]
@@ -354,7 +353,8 @@ function! neo4jbible#echo_line_data(msg) abort
 
       call append(line('.')-1, g:neo4jbible#highlighted_lines[key])
       call append(line('.')-1, s:bible_content)
-      call append(line('.')-1, g:result_dict[g:neo4jbible#highlighted_lines[key]])
+      "call append(line('.')-1, g:result_dict[g:neo4jbible#highlighted_lines[key]])
+      call InsertNewLine_for_paste(bufnr(), line('.')-1, g:result_dict[g:neo4jbible#highlighted_lines[key]])
       "call append(line('.')-1, g:result_dict[key])
       let pos = getcurpos()
       let newpos = [pos[1]+1 ,pos[2],pos[3],pos[4]]
@@ -408,10 +408,26 @@ endfunction
 
 function! InsertNewLine(buffer,num, text)
     " 改行で分割して配列にする
-    let lines = split(a:text, '&return&')
+    let lines = split(a:text, '\\n')
 
     " 現在の行に配列の内容を挿入
     call setbufline(a:buffer, a:num, lines)
+    "call setbufline(a:buffer, a:num+len(lines), 'test')
+
+endfunction
+
+function! InsertNewLine_for_paste(buffer,num, text)
+    let current_window_id = win_getid()
+    call win_gotoid(a:buffer)
+    " 改行で分割して配列にする
+    let lines = split(a:text, '\\n')
+
+    " 現在の行に配列の内容を挿入
+    for line in lines
+      call append(a:num, line)
+    "call setbufline(a:buffer, a:num+len(lines), 'test')
+    endfor
+    call win_gotoid(current_window_id)
 endfunction
 
 function! neo4jbible#GetOtherWindowId()
