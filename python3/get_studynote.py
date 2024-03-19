@@ -182,3 +182,26 @@ def get_neo4j_bible_merginalref(addr):
     
     return main(addr)
 
+def get_neo4j_bible_Insight(addr):
+    addr = addr.strip()
+    from neo4j import GraphDatabase, RoutingControl
+    # neo4j serverに接続するdriverの設定
+    driver = GraphDatabase.driver(
+        'neo4j://localhost:7687', 
+        auth=('neo4j', config.password))
+    def target_to_bible(driver, name):
+        records, _, _ = driver.execute_query("""
+            MATCH (target:Bible)<-[r]-(it:Insight) 
+            WHERE target.addr = $name
+            RETURN DISTINCT r.summary, target.addr, it.headword, r.data_pid
+            """,
+            name=name, database_=config.db_name, routing_=RoutingControl.READ,
+        )
+        
+        result = []
+        result_dic = {}
+        for record in records:
+            result.append([f'{record["target.addr"]}|{record["it.headword"]} {record["r.data_pid"]}',f'{record["r.summary"]}'])
+            result_dic[f'{record["target.addr"]}|{record["it.headword"]} {record["r.data_pid"]}'] = f'{record["r.summary"]}'
+        return [result, result_dic]
+    return target_to_bible(driver,addr)

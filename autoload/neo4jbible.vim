@@ -125,6 +125,15 @@ function! neo4jbible#make_windows_bible_merginalref(text) abort
     call neo4jbible#AddToHistory(s:result)
 endfunction
 
+function! neo4jbible#make_windows_bible_Insight(text) abort
+    let g:current_window_id = win_getid()
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    echo(a:text)
+    python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_insight(vim.eval("a:text"))}')
+    call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
+endfunction
+
 function! neo4jbible#make_windows(result) abort
     let g:result_list = a:result[0]
     let g:result_dict = a:result[1]
@@ -219,6 +228,9 @@ function! neo4jbible#set_keymap(bufname) abort
           \ <Plug>(neo4j-open-node)
           \ :<C-u> call neo4jbible#openNode() <CR>
         nnoremap <silent> <buffer>
+          \ <Plug>(neo4j-open-insight)
+          \ :<C-u> call neo4jbible#openInsight() <CR>
+        nnoremap <silent> <buffer>
           \ <Plug>(neo4j-history-back)
           \ :<C-u> call neo4jbible#make_windows_History() <CR>
         nnoremap <silent> <buffer>
@@ -235,6 +247,7 @@ function! neo4jbible#set_keymap(bufname) abort
         nmap <buffer> <CR> <Plug>(session-open)
         nmap <buffer> z <Plug>(session-select)
         nmap <buffer> <S-m> <Plug>(neo4j-open-node)
+        nmap <buffer> <S-i> <Plug>(neo4j-open-insight)
         nmap <buffer> u <Plug>(neo4j-history-back)
         nmap <buffer> <C-r> <Plug>(neo4j-history-next)
 
@@ -285,6 +298,11 @@ endfunction
 function! neo4jbible#openNode() abort
   let text = getline(".")
   call neo4jbible#make_windows_bible_merginalref(text)
+endfunction
+
+function! neo4jbible#openInsight() abort
+  let text = getline(".")
+  call neo4jbible#make_windows_bible_Insight(text)
 endfunction
 
 function! neo4jbible#infowindow(info) abort

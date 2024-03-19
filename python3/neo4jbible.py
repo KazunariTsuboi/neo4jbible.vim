@@ -24,3 +24,6 @@ def neo4jbible_getBible_noweb(text):
 
 def neo4jbible_get_neo4j_bible_merginalref(text):
     return get_studynote.get_neo4j_bible_merginalref(text)
+
+def neo4jbible_get_neo4j_bible_insight(text):
+    return get_studynote.get_neo4j_bible_Insight(text)
