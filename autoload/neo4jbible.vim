@@ -459,8 +459,10 @@ function! InsertNewLine_for_paste(buffer,num, text)
     let lines = split(a:text, '\\n')
 
     " 現在の行に配列の内容を挿入
+    let cnt = 0
     for line in lines
-      call append(a:num, line)
+      call append(a:num+cnt, line)
+      let cnt += 1
     "call setbufline(a:buffer, a:num+len(lines), 'test')
     endfor
     call win_gotoid(current_window_id)
