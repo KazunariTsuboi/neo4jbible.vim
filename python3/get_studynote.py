@@ -208,3 +208,32 @@ def get_neo4j_bible_Insight(addr):
                 result_dic[f'{record["target.addr"]}|{record["it.headword"]} {record["r.data_pid"]}'] = f'{record["r.summary"]}'
         return [result, result_dic]
     return target_to_bible(driver,bible_citation_list)
+
+def get_neo4j_bible_Watchtower(addr):
+    print(addr)
+    bible_citation_list = biblesitation.citation_text(addr)
+    print(bible_citation_list)
+    from neo4j import GraphDatabase, RoutingControl
+    # neo4j serverに接続するdriverの設定
+    driver = GraphDatabase.driver(
+        'neo4j://localhost:7687', 
+        auth=('neo4j', config.password))
+    def target_to_bible(driver, names):
+        result = []
+        result_dic = {}
+        for name in names:
+            records, _, _ = driver.execute_query("""
+                MATCH (target:Bible)<-[r]-(w:W) 
+                WHERE target.addr = $name
+                RETURN r.summary, r.url, r.data_pid, target.addr, w.page, w.name, r.year
+                """,
+                name=name, database_=config.db_name, routing_=RoutingControl.READ,
+            )
+            
+            for record in records:
+                result_key = f'{record["target.addr"]}|{record["w.name"]} {record["w.page"]} {record["r.data_pid"]}'
+                result_item= f'{record["r.summary"]}\n{record["r.url"]}'
+                result.append([result_key,result_item])
+                result_dic[result_key] = result_item
+        return [result, result_dic]
+    return target_to_bible(driver,bible_citation_list)
