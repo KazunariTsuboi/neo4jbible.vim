@@ -143,6 +143,26 @@ function! neo4jbible#make_windows_bible_Watchtower(text) abort
     call neo4jbible#AddToHistory(s:result)
 endfunction
 
+function! neo4jbible#make_windows_bible_Watchtower_from_title(...) abort
+    let text = a:1
+    let g:current_window_id = win_getid()
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    " 現在のウィンドウIDの取得
+    python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_watchtower_from_title(vim.eval("text"))}')
+    call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
+endfunction
+
+function! neo4jbible#make_windows_bible_Insight_from_title(...) abort
+    let text = a:1
+    let g:current_window_id = win_getid()
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    " 現在のウィンドウIDの取得
+    python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_insight_from_title(vim.eval("text"))}')
+    call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
+endfunction
+
 function! neo4jbible#make_windows(result) abort
     let g:result_list = a:result[0]
     let g:result_dict = a:result[1]
@@ -303,9 +323,14 @@ function! neo4jbible#move(num) abort
   python3 line = vim.eval('getline(".")')
   python3 bible_content = get_bible(line)
   python3 vim.command('let s:bible_content = "{}"'.format(bible_content.replace('"', '\\"')))
-  "echo(s:bible_content)
   call neo4jbible#biblewindow(getline("."),0)
   call neo4jbible#biblewindow(s:bible_content,1)
+
+  python3 bible_content_bi12 = get_bible_bi12(line)
+  python3 vim.command('let s:bible_content_bi12 = "{}"'.format(bible_content_bi12.replace('"', '\\"')))
+  call neo4jbible#biblewindow('',2)
+  call neo4jbible#biblewindow(getline(".")." 参付",3)
+  call neo4jbible#biblewindow(s:bible_content_bi12,4)
 endfunction
 
 function! neo4jbible#openNode() abort
@@ -468,32 +493,6 @@ function! InsertNewLine_for_paste(buffer,num, text)
     call win_gotoid(current_window_id)
 endfunction
 
-function! neo4jbible#GetOtherWindowId()
-  " 現在のタブページ内のすべてのウィンドウをループします。
-  for winid in range(1, winnr('$'))
-    " ウィンドウのバッファ名を取得します。
-    let bufname = bufname(winid)
-    " 特定の名前でない場合、そのウィンドウIDを返します。
-    if bufname != g:neo4j_list_buffer && bufname != g:neo4j_list_buffer_right && bufname != g:neo4j_list_buffer_bible
-      return bufwinid(winid)
-    endif
-  endfor
-  " 該当するウィンドウがない場合は-1を返します。
-  return -1
-
-"  " 現在のタブページ内のすべてのウィンドウをループします。
-"  for winid in win_findbuf(bufnr('%'))
-"    " ウィンドウのバッファ名を取得します。
-"    let bufname = bufname(winbufnr(winid))
-"    " 特定の名前でない場合、そのウィンドウIDを返します。
-"    if bufname != g:neo4j_list_buffer && bufname != g:neo4j_list_buffer_right && bufname != g:neo4j_list_buffer_bible
-"      return winid
-"    endif
-"  endfor
-"  " 該当するウィンドウがない場合は-1を返します。
-"  return -1
-endfunction
-
 function! neo4jbible#delete_window(bufname) abort
     let current_window_id = win_getid()
     let targetwindow_id = bufwinid(a:bufname)
@@ -502,4 +501,34 @@ function! neo4jbible#delete_window(bufname) abort
       %delete _
       call win_gotoid(current_window_id)
     endif
+endfunction
+
+function! s:create_winid2bufnr_dict() abort " {{{
+  let winid2bufnr_dict = {}
+  for bnr in filter(range(1, bufnr('$')), 'v:val')
+    for wid in win_findbuf(bnr)
+      let winid2bufnr_dict[wid] = bnr
+    endfor
+  endfor
+  return winid2bufnr_dict
+endfunction " }}}
+
+function! neo4jbible#GetOtherWindowId()
+  " 現在のタブページ番号を取得
+  let current_tnr = tabpagenr()
+  " ウィンドウIDからバッファ番号への逆引き辞書を作成
+  let winid2bufnr_dict = s:create_winid2bufnr_dict()
+  " 現在のタブページ内のすべてのウィンドウをループ
+  for wininfo in map(range(1, tabpagewinnr(current_tnr, '$')), '{"wid": win_getid(v:val, current_tnr)}')
+    " ウィンドウIDに対応するバッファ番号を取得
+    let bufnr = get(winid2bufnr_dict, wininfo.wid, -1)
+    " バッファ名を取得
+    let bufname = bufnr == -1 ? '' : bufname(bufnr)
+    " 条件に合致する場合、ウィンドウIDを返す
+    if bufname != g:neo4j_list_buffer && bufname != g:neo4j_list_buffer_right && bufname != g:neo4j_list_buffer_bible
+      return wininfo.wid
+    endif
+  endfor
+  " 該当するウィンドウがない場合は-1を返す
+  return -1
 endfunction

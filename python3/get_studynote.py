@@ -209,6 +209,25 @@ def get_neo4j_bible_Insight(addr):
         return [result, result_dic]
     return target_to_bible(driver,bible_citation_list)
 
+def sort_key_watchtower(element):
+    match = re.search(r'塔(研|般)?0?(\d+) (No. )?(\d+)(月号|/)?.*ページ (\d+)$', element[0])
+    if match:
+        year = int(match.group(2))
+        month = int(match.group(4))
+        data_pid = int(match.group(6)) * -1
+        if year <= 40:
+            year +=100
+        return (year, month, data_pid)
+    return (0, 0, 0)
+
+def sort_key_insight(element):
+    match = re.search(r'^.*\|(.*) (\d+)$', element[0])
+    if match:
+        headword = match.group(1)
+        data_pid = int(match.group(2))
+        return (headword, data_pid)
+    return (0, 0)
+
 def get_neo4j_bible_Watchtower(addr):
     bible_citation_list = biblesitation.citation_text(addr)
     from neo4j import GraphDatabase, RoutingControl
@@ -216,16 +235,6 @@ def get_neo4j_bible_Watchtower(addr):
     driver = GraphDatabase.driver(
         'neo4j://localhost:7687', 
         auth=('neo4j', config.password))
-
-    def sort_key(element):
-        match = re.search(r'塔(研|般)?0?(\d+) (\d+)(月号|/)?', element[0])
-        if match:
-            year = int(match.group(2))
-            month = int(match.group(3))
-            if year <= 40:
-                year +=100
-            return (year, month)
-        return (0, 0)
 
     def target_to_bible(driver, names):
         result = []
@@ -244,6 +253,62 @@ def get_neo4j_bible_Watchtower(addr):
                 result_item= f'{record["r.summary"]}\n{record["r.url"]}'
                 result.append([result_key,result_item])
                 result_dic[result_key] = result_item
-        sorted_result = sorted(result, key=sort_key, reverse=True)
+        sorted_result = sorted(result, key=sort_key_watchtower, reverse=True)
         return [sorted_result, result_dic]
     return target_to_bible(driver,bible_citation_list)
+
+
+def get_neo4j_bible_Watchtower_from_title(title):
+    title = title.strip()
+    from neo4j import GraphDatabase, RoutingControl
+    # neo4j serverに接続するdriverの設定
+    driver = GraphDatabase.driver(
+        'neo4j://localhost:7687', 
+        auth=('neo4j', config.password))
+
+
+    def target_to_bible(driver, title):
+        result = []
+        result_dic = {}
+        records, _, _ = driver.execute_query("""
+            MATCH (target:Bible)<-[r]-(w:W) 
+            WHERE w.name =~ $name
+            RETURN r.summary, r.url, r.data_pid, target.addr, w.page, w.name, r.year
+            """,
+            name=f'{title}', database_=config.db_name, routing_=RoutingControl.READ,
+        )
+        
+        for record in records:
+            result_key = f'{record["target.addr"]}|{record["w.name"]} {record["w.page"]} {record["r.data_pid"]}'
+            result_item= f'{record["r.summary"]}\n{record["r.url"]}'
+            result.append([result_key,result_item])
+            result_dic[result_key] = result_item
+        sorted_result = sorted(result, key=sort_key_watchtower, reverse=True)
+        return [sorted_result, result_dic]
+    return target_to_bible(driver,title)
+
+def get_neo4j_bible_Insight_from_title(title):
+    title = title.strip()
+    from neo4j import GraphDatabase, RoutingControl
+    # neo4j serverに接続するdriverの設定
+    driver = GraphDatabase.driver(
+        'neo4j://localhost:7687', 
+        auth=('neo4j', config.password))
+    def target_to_bible(driver, title):
+        result = []
+        result_dic = {}
+        records, _, _ = driver.execute_query("""
+            MATCH (target:Bible)<-[r]-(it:Insight) 
+            WHERE it.headword =~ $regex
+            RETURN DISTINCT r.summary, target.addr, it.headword, r.data_pid
+            ORDER BY it.headword, r.data_pid
+            """,
+            regex=f'{title}', database_=config.db_name, routing_=RoutingControl.READ,
+        )
+        
+        for record in records:
+            result.append([f'{record["target.addr"]}|{record["it.headword"]} {record["r.data_pid"]}',f'{record["r.summary"]}'])
+            result_dic[f'{record["target.addr"]}|{record["it.headword"]} {record["r.data_pid"]}'] = f'{record["r.summary"]}'
+        sorted_result = sorted(result, key=sort_key_insight)
+        return [sorted_result, result_dic]
+    return target_to_bible(driver,title)
