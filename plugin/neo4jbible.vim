@@ -21,3 +21,5 @@ command! -nargs=* BibleFromTextNoWeb call neo4jbible#make_windows_from_selected_
 command! -nargs=* BibleStudyNote call neo4jbible#make_windows_from_command(<f-args>)
 command! -nargs=* BibleWatchtowerTitleArg call neo4jbible#make_windows_bible_Watchtower_from_title(<f-args>)
 command! -nargs=* BibleInsightArg call neo4jbible#make_windows_bible_Insight_from_title(<f-args>)
+
+command! -nargs=* Neo4JBible4Steps call neo4jbible#make_windows_boble_route_4steps(neo4jbible#getSelectedText())

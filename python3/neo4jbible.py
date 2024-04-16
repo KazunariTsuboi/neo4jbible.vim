@@ -36,3 +36,6 @@ def neo4jbible_get_neo4j_bible_watchtower_from_title(text):
 
 def neo4jbible_get_neo4j_bible_insight_from_title(text):
     return get_studynote.get_neo4j_bible_Insight_from_title(text)
+
+def neo4jbible_get_neo4j_bible_route_4steps(text):
+    return get_studynote.get_neo4j_bible_route_4steps(text)

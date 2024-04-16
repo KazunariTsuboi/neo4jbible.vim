@@ -75,6 +75,36 @@ function! neo4jbible#make_windows_UnHistory() abort
     endif
 endfunction
 
+function! neo4jbible#make_windows_boble_route_4steps(text) abort
+    let g:current_window_id = win_getid()
+
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    " 現在のウィンドウIDの取得
+    python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_route_4steps(vim.eval("a:text"))}')
+    call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
+endfunction
+
+
+function! neo4jbible#make_windows_boble_route_ditail() abort
+    let g:current_window_id = win_getid()
+
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    let tmp_list = split(g:result_dict[trim(getline('.'))], '\\n')
+    let output_dict = {}
+    let output_list = []
+
+    for item in tmp_list
+      let output_dict[item] = ''
+      call add(output_list, [item, ''])
+    endfor
+
+    let s:result = [output_list, output_dict]
+
+    call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
+endfunction
+
 function! neo4jbible#make_windows_from_command(...) abort
   let g:current_window_id = win_getid()
     let arg_book =    a:0 >= 1 ? a:1 : 'マタイ'
@@ -268,6 +298,9 @@ function! neo4jbible#set_keymap(bufname) abort
         nnoremap <silent> <buffer>
           \ <Plug>(neo4j-history-next)
           \ :<C-u> call neo4jbible#make_windows_UnHistory() <CR>
+        nnoremap <silent> <buffer>
+          \ <Plug>(neo4j-open-route-detail)
+          \ :<C-u> call neo4jbible#make_windows_boble_route_ditail() <CR>
     
         " <Plug>マップをキーにマッピングします
         " `q` は最終的に :<C-u>bwipeout!<CR>
@@ -281,6 +314,7 @@ function! neo4jbible#set_keymap(bufname) abort
         nmap <buffer> <S-m> <Plug>(neo4j-open-node)
         nmap <buffer> <S-i> <Plug>(neo4j-open-insight)
         nmap <buffer> <S-w> <Plug>(neo4j-open-watchtower)
+        nmap <buffer> <S-r> <Plug>(neo4j-open-route-detail)
         nmap <buffer> u <Plug>(neo4j-history-back)
         nmap <buffer> <C-r> <Plug>(neo4j-history-next)
 
