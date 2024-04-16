@@ -39,3 +39,12 @@ def neo4jbible_get_neo4j_bible_insight_from_title(text):
 
 def neo4jbible_get_neo4j_bible_route_4steps(text):
     return get_studynote.get_neo4j_bible_route_4steps(text)
+
+def neo4jbible_get_neo4j_bible_route_3steps(text):
+    return get_studynote.get_neo4j_bible_route_3steps(text)
+
+def neo4jbible_get_neo4j_bible_route_2steps(text):
+    return get_studynote.get_neo4j_bible_route_2steps(text)
+
+def neo4jbible_get_neo4j_bible_route_1steps(text):
+    return get_studynote.get_neo4j_bible_route_1steps(text)

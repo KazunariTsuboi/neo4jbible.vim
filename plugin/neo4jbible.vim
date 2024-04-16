@@ -23,3 +23,6 @@ command! -nargs=* BibleWatchtowerTitleArg call neo4jbible#make_windows_bible_Wat
 command! -nargs=* BibleInsightArg call neo4jbible#make_windows_bible_Insight_from_title(<f-args>)
 
 command! -nargs=* Neo4JBible4Steps call neo4jbible#make_windows_boble_route_4steps(neo4jbible#getSelectedText())
+command! -nargs=* Neo4JBible3Steps call neo4jbible#make_windows_boble_route_3steps(neo4jbible#getSelectedText())
+command! -nargs=* Neo4JBible2Steps call neo4jbible#make_windows_boble_route_2steps(neo4jbible#getSelectedText())
+command! -nargs=* Neo4JBible1Steps call neo4jbible#make_windows_boble_route_1steps(neo4jbible#getSelectedText())

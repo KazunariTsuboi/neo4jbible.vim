@@ -369,3 +369,140 @@ def get_neo4j_bible_route_4steps(text):
         return [result_list, result_dic]
     return target_to_bible(driver,b1)
 
+
+def get_neo4j_bible_route_3steps(text):
+    bible_citation_list = biblesitation.citation_text(text)
+    
+    b1 = bible_citation_list[0]
+    b2 = bible_citation_list[1]
+    from neo4j import GraphDatabase, RoutingControl
+    # neo4j serverに接続するdriverの設定
+    driver = GraphDatabase.driver(
+        'neo4j://localhost:7687', 
+        auth=('neo4j', config.password))
+    def target_to_bible(driver, bi1):
+        result_dic = {}
+        result_list = []
+        records, _, _ = driver.execute_query("""
+            match (a:Bible)
+            where a.addr = $b1
+            match (b:Bible)
+            where b.addr = $b2
+            match p = (a)--(r1:Bible)--(r2:Bible)--(r3:Bible)--(b)
+            return distinct  r1.addr, r1.content, r2.addr, r2.content, r3.addr, r3.content, a.addr, a.content, b.addr, b.content
+            """,
+            b1=b1, b2=b2,database_=config.db_name, routing_=RoutingControl.READ,
+        )
+        
+        cnt = 0
+        max_cnt = 20
+        for record in records:
+            
+            addr_size = max([
+                len_halfwidth(record['a.addr']),
+                len_halfwidth(record['r1.addr']),
+                len_halfwidth(record['r2.addr']),
+                len_halfwidth(record['r3.addr']),
+                len_halfwidth(record['b.addr']),
+            ]) 
+            #result_dic[f'p{cnt}'] = [n.get('addr') for n in record['p'].nodes] 
+            result_item = "\n".join([f"{record['a.addr']:<{addr_size}} | {truncate_string(record['a.content'],   max_cnt)}",
+                                     f"{record['r1.addr']:<{addr_size}} | {truncate_string(record['r1.content'], max_cnt)}",
+                                     f"{record['r2.addr']:<{addr_size}} | {truncate_string(record['r2.content'], max_cnt)}",
+                                     f"{record['r3.addr']:<{addr_size}} | {truncate_string(record['r3.content'], max_cnt)}",
+                                     f"{record['b.addr']:<{addr_size}} | {truncate_string(record['b.content'],   max_cnt)}"])
+            result_dic[f'{b1} | p{cnt}'] = result_item
+            result_list.append([f'{b1} | p{cnt}',result_item])
+            cnt += 1
+        return [result_list, result_dic]
+    return target_to_bible(driver,b1)
+
+
+def get_neo4j_bible_route_2steps(text):
+    bible_citation_list = biblesitation.citation_text(text)
+    
+    b1 = bible_citation_list[0]
+    b2 = bible_citation_list[1]
+    from neo4j import GraphDatabase, RoutingControl
+    # neo4j serverに接続するdriverの設定
+    driver = GraphDatabase.driver(
+        'neo4j://localhost:7687', 
+        auth=('neo4j', config.password))
+    def target_to_bible(driver, bi1):
+        result_dic = {}
+        result_list = []
+        records, _, _ = driver.execute_query("""
+            match (a:Bible)
+            where a.addr = $b1
+            match (b:Bible)
+            where b.addr = $b2
+            match p = (a)--(r1:Bible)--(r2:Bible)--(b)
+            return distinct  r1.addr, r1.content, r2.addr, r2.content, a.addr, a.content, b.addr, b.content
+            """,
+            b1=b1, b2=b2,database_=config.db_name, routing_=RoutingControl.READ,
+        )
+        
+        cnt = 0
+        max_cnt = 20
+        for record in records:
+            
+            addr_size = max([
+                len_halfwidth(record['a.addr']),
+                len_halfwidth(record['r1.addr']),
+                len_halfwidth(record['r2.addr']),
+                len_halfwidth(record['b.addr']),
+            ]) 
+            #result_dic[f'p{cnt}'] = [n.get('addr') for n in record['p'].nodes] 
+            result_item = "\n".join([f"{record['a.addr']:<{addr_size}} | {truncate_string(record['a.content'],   max_cnt)}",
+                                     f"{record['r1.addr']:<{addr_size}} | {truncate_string(record['r1.content'], max_cnt)}",
+                                     f"{record['r2.addr']:<{addr_size}} | {truncate_string(record['r2.content'], max_cnt)}",
+                                     f"{record['b.addr']:<{addr_size}} | {truncate_string(record['b.content'],   max_cnt)}"])
+            result_dic[f'{b1} | p{cnt}'] = result_item
+            result_list.append([f'{b1} | p{cnt}',result_item])
+            cnt += 1
+        return [result_list, result_dic]
+    return target_to_bible(driver,b1)
+
+
+def get_neo4j_bible_route_1steps(text):
+    bible_citation_list = biblesitation.citation_text(text)
+    
+    b1 = bible_citation_list[0]
+    b2 = bible_citation_list[1]
+    from neo4j import GraphDatabase, RoutingControl
+    # neo4j serverに接続するdriverの設定
+    driver = GraphDatabase.driver(
+        'neo4j://localhost:7687', 
+        auth=('neo4j', config.password))
+    def target_to_bible(driver, bi1):
+        result_dic = {}
+        result_list = []
+        records, _, _ = driver.execute_query("""
+            match (a:Bible)
+            where a.addr = $b1
+            match (b:Bible)
+            where b.addr = $b2
+            match p = (a)--(r1:Bible)--(b)
+            return distinct  r1.addr, r1.content, a.addr, a.content, b.addr, b.content
+            """,
+            b1=b1, b2=b2,database_=config.db_name, routing_=RoutingControl.READ,
+        )
+        
+        cnt = 0
+        max_cnt = 20
+        for record in records:
+            
+            addr_size = max([
+                len_halfwidth(record['a.addr']),
+                len_halfwidth(record['r1.addr']),
+                len_halfwidth(record['b.addr']),
+            ]) 
+            #result_dic[f'p{cnt}'] = [n.get('addr') for n in record['p'].nodes] 
+            result_item = "\n".join([f"{record['a.addr']:<{addr_size}} | {truncate_string(record['a.content'],   max_cnt)}",
+                                     f"{record['r1.addr']:<{addr_size}} | {truncate_string(record['r1.content'], max_cnt)}",
+                                     f"{record['b.addr']:<{addr_size}} | {truncate_string(record['b.content'],   max_cnt)}"])
+            result_dic[f'{b1} | p{cnt}'] = result_item
+            result_list.append([f'{b1} | p{cnt}',result_item])
+            cnt += 1
+        return [result_list, result_dic]
+    return target_to_bible(driver,b1)

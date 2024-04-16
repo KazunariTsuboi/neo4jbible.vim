@@ -85,6 +85,35 @@ function! neo4jbible#make_windows_boble_route_4steps(text) abort
     call neo4jbible#AddToHistory(s:result)
 endfunction
 
+function! neo4jbible#make_windows_boble_route_3steps(text) abort
+    let g:current_window_id = win_getid()
+
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    " 現在のウィンドウIDの取得
+    python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_route_3steps(vim.eval("a:text"))}')
+    call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
+endfunction
+
+function! neo4jbible#make_windows_boble_route_2steps(text) abort
+    let g:current_window_id = win_getid()
+
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    " 現在のウィンドウIDの取得
+    python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_route_2steps(vim.eval("a:text"))}')
+    call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
+endfunction
+
+function! neo4jbible#make_windows_boble_route_1steps(text) abort
+    let g:current_window_id = win_getid()
+
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    " 現在のウィンドウIDの取得
+    python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_route_1steps(vim.eval("a:text"))}')
+    call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
+endfunction
 
 function! neo4jbible#make_windows_boble_route_ditail() abort
     let g:current_window_id = win_getid()
