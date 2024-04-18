@@ -26,3 +26,7 @@ command! -nargs=* Neo4JBible4Steps call neo4jbible#make_windows_boble_route_4ste
 command! -nargs=* Neo4JBible3Steps call neo4jbible#make_windows_boble_route_3steps(neo4jbible#getSelectedText())
 command! -nargs=* Neo4JBible2Steps call neo4jbible#make_windows_boble_route_2steps(neo4jbible#getSelectedText())
 command! -nargs=* Neo4JBible1Steps call neo4jbible#make_windows_boble_route_1steps(neo4jbible#getSelectedText())
+
+command! -nargs=* Neo4JBibleMeanFromWIT call neo4jbible#make_windows_bible_watchtower_mean(<q-args>)
+command! -nargs=* Neo4JBibleMeanFromBI call neo4jbible#make_windows_bible_mean(<q-args>)
+command! -nargs=+ Neo4JBibleWeekly call neo4jbible#make_windows_weekly_comment(<f-args>)

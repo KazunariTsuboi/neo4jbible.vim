@@ -75,6 +75,51 @@ function! neo4jbible#make_windows_UnHistory() abort
     endif
 endfunction
 
+function! neo4jbible#make_windows_weekly_comment(...) abort
+  let g:current_window_id = win_getid()
+    let arg_book  =    a:1 
+    let arg_start =    a:2 
+    let arg_end   =    a:3 
+
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    " 現在のウィンドウIDの取得
+    python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_weekly_comment(book=vim.eval("arg_book"), start=vim.eval("arg_start"), end=vim.eval("arg_end"))}')
+    call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
+endfunction
+
+function! neo4jbible#make_windows_bible_mean(args) abort
+ " 引数が空か、空白のみの場合にはデフォルトのテキストを取得
+    if a:args == ""
+        let text = neo4jbible#getSelectedText()
+    else
+        let text = a:args
+    endif
+    let g:current_window_id = win_getid()
+
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    " 現在のウィンドウIDの取得
+    python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_mean(vim.eval("text"))}')
+    call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
+endfunction
+
+function! neo4jbible#make_windows_bible_watchtower_mean(args) abort
+ " 引数が空か、空白のみの場合にはデフォルトのテキストを取得
+    if a:args == ""
+        let text = neo4jbible#getSelectedText()
+    else
+        let text = a:args
+    endif
+    let g:current_window_id = win_getid()
+
+    call neo4jbible#lock_unlock_window(g:neo4j_list_buffer, 'unlock')
+    " 現在のウィンドウIDの取得
+    python3 vim.command(f'let s:result = {neo4jbible_get_neo4j_bible_watchtower_mean(vim.eval("text"))}')
+    call neo4jbible#make_windows(s:result)
+    call neo4jbible#AddToHistory(s:result)
+endfunction
+
 function! neo4jbible#make_windows_boble_route_4steps(text) abort
     let g:current_window_id = win_getid()
 

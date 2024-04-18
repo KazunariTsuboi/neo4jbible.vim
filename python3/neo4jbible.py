@@ -48,3 +48,15 @@ def neo4jbible_get_neo4j_bible_route_2steps(text):
 
 def neo4jbible_get_neo4j_bible_route_1steps(text):
     return get_studynote.get_neo4j_bible_route_1steps(text)
+
+def neo4jbible_get_neo4j_bible_route_1steps(text):
+    return get_studynote.get_neo4j_bible_route_1steps(text)
+
+def neo4jbible_get_neo4j_bible_watchtower_mean(text):
+    return get_studynote.get_neo4j_bible_watchtower_mean(text)
+
+def neo4jbible_get_neo4j_bible_mean(text):
+    return get_studynote.get_neo4j_bible_mean(text)
+
+def neo4jbible_get_neo4j_bible_weekly_comment(book,start,end):
+    return get_studynote.get_neo4j_bible_weekly_comment(book=book,chapter_start=start,chapter_end=end)

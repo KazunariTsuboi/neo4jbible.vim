@@ -506,3 +506,100 @@ def get_neo4j_bible_route_1steps(text):
             cnt += 1
         return [result_list, result_dic]
     return target_to_bible(driver,b1)
+
+def get_neo4j_bible_watchtower_mean(text):
+    text = text.strip()
+    from neo4j import GraphDatabase, RoutingControl, unit_of_work
+    # neo4j serverに接続するdriverの設定
+    driver = GraphDatabase.driver(
+        'neo4j://localhost:7687', 
+        auth=('neo4j', config.password))
+
+    def target_to_bible(driver, text):
+        result = []
+        result_dic = {}
+        records, _, _ = driver.execute_query("""
+            match p = (w)-[r:W_BI|IT_BI]-(b:Bible)
+            where r.summary =~ ".*" + $text +".*" and  r.summary =~ ".*という(意味|語)?.*" and  r.summary =~ ".*ギリシャ語.*|.*ヘブライ語.*"
+            return distinct b.addr, w.name, w.page, r.summary, r.data_pid, r.url limit 100
+            """,
+            text=f'{text}', database_=config.db_name, routing_=RoutingControl.READ,
+        )
+        
+        for record in records:
+            result_key = f'{record["b.addr"]}|{record["w.name"]} {record["w.page"]} {record["r.data_pid"]}'
+            result_item= f'{record["r.summary"]}\n{record["r.url"]}'
+            result.append([result_key,result_item])
+            result_dic[result_key] = result_item
+        sorted_result = sorted(result, key=sort_key_watchtower, reverse=True)
+        return [sorted_result, result_dic]
+    return target_to_bible(driver,text)
+
+def get_neo4j_bible_mean(text):
+    bible_citation_list = biblesitation.citation_text(text)
+    
+    reg_word = "("
+    for bi in bible_citation_list:
+        reg_word += f'{bi}|'
+    reg_word += ")"
+
+
+    from neo4j import GraphDatabase, RoutingControl
+    # neo4j serverに接続するdriverの設定
+    driver = GraphDatabase.driver(
+        'neo4j://localhost:7687', 
+        auth=('neo4j', config.password))
+
+
+    def target_to_bible(driver, text):
+        result = []
+        result_dic = {}
+        records, _, _ = driver.execute_query("""
+            match p = (w)-[r:W_BI|IT_BI]-(b:Bible)
+            where r.summary =~ ".*という(意味|語)?.*" and  r.summary =~ ".*ギリシャ語.*|.*ヘブライ語.*" and b.addr =~ $text
+            return distinct b.addr, w.name, w.page, r.summary, r.data_pid, r.url limit 100
+            """,
+            text=f'{text}', database_=config.db_name, routing_=RoutingControl.READ,
+        )
+        
+        for record in records:
+            result_key = f'{record["b.addr"]}|{record["w.name"]} {record["w.page"]} {record["r.data_pid"]}'
+            result_item= f'{record["r.summary"]}\n{record["r.url"]}'
+            result.append([result_key,result_item])
+            result_dic[result_key] = result_item
+        sorted_result = sorted(result, key=sort_key_watchtower, reverse=True)
+        return [sorted_result, result_dic]
+    return target_to_bible(driver,reg_word)
+
+def get_neo4j_bible_weekly_comment(book='マタイ', chapter_start='1', chapter_end='2'):
+
+    from neo4j import GraphDatabase, RoutingControl
+    # neo4j serverに接続するdriverの設定
+    driver = GraphDatabase.driver(
+        'neo4j://localhost:7687', 
+        auth=('neo4j', config.password))
+
+
+    def target_to_bible(driver, book, chapter_start, chapter_end):
+        result = []
+        result_dic = {}
+        records, _, _ = driver.execute_query("""
+            match p = (w)-[r:IT_BI]-(b:Bible)
+            where b.book = $book and $start <= b.chapter <= $end
+            return distinct b.addr, w.name, r.summary, r.url
+            """,
+            book = book,
+            start= int(chapter_start),
+            end  = int(chapter_end),
+            database_=config.db_name,
+            routing_=RoutingControl.READ,
+        )
+        
+        for record in records:
+            result_key = f'{record["b.addr"]}|{record["w.name"]}'
+            result_item= f'{record["r.summary"]}\n{record["r.url"]}'
+            result.append([result_key,result_item])
+            result_dic[result_key] = result_item
+        sorted_result = sorted(result, key=sort_key_watchtower, reverse=True)
+        return [sorted_result, result_dic]
+    return target_to_bible(driver, book=book, chapter_start=chapter_start, chapter_end=chapter_end)
