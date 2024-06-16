@@ -9,14 +9,17 @@ import unicodedata
 #from biblesitation import vs2str, str2vs_chapter_range
 import biblesitation
 
+# nwt
 URL = f"https://www.jw.org/ja/%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%E3%83%BC/%E8%81%96%E6%9B%B8/%E3%82%B9%E3%82%BF%E3%83%87%E3%82%A3%E3%83%BC%E7%89%88%E8%81%96%E6%9B%B8/%E5%90%84%E6%9B%B8/json/data/"
 
+# bi12
+#URL = "https://www.jw.org/ja/%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%E3%83%BC/%E8%81%96%E6%9B%B8/bi12/%E5%90%84%E6%9B%B8/json/data/"
 def get_studynote_json(url_bistring):
     headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36'}
     #urlpath = r"https://www.jw.org/ja/%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%E3%83%BC/%E8%81%96%E6%9B%B8/%E3%82%B9%E3%82%BF%E3%83%87%E3%82%A3%E3%83%BC%E7%89%88%E8%81%96%E6%9B%B8/%E5%90%84%E6%9B%B8/json/data/40001000-40001999"
     urlpath = URL + url_bistring
     urlpath = urllib.parse.unquote(urlpath)
-    res=requests.request('GET',urlpath, headers=headers,timeout=(5,5))
+    res=requests.request('GET',urlpath, headers=headers,timeout=(15,15))
     data = json.loads(res.text)
     return data
 
